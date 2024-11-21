@@ -1,15 +1,9 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "mongodb"
   url      = env("DATABASE_URL")
 }
 
@@ -28,56 +22,57 @@ enum Method {
   Transfer_bank
 }
 
-model Pelanggan {
-  id            Int         @id @default(autoincrement())
-  username      String      @default("")
-  password      String      @default("")
-  email         String      @unique @default("")
-  nomor_telp    String      @default("")
-  jenis_kelamin Jk          @default(Laki_laki)
-  createdAt     DateTime    @default(now())
-  updateAt      DateTime    @updatedAt
-  Transaksi     Transaksi[]
+enum Role {
+  Admin
+  User
 }
 
-model Admin {
-  id        Int         @id @default(autoincrement())
-  username  String      @default("")
-  password  String      @default("")
-  Transaksi Transaksi[]
+model User {
+  id            String          @id @default(auto()) @map("_id") @db.ObjectId
+  uuid          String          @unique @default(uuid())
+  username      String          @default("")
+  password      String          @default("")
+  email         String          @unique @default("")
+  nomor_telp    String          @default("")
+  jenis_kelamin Jk              @default(Laki_laki)
+  createdAt     DateTime        @default(now())
+  role          Role            @default(User)
+  updatedAt     DateTime        @updatedAt
+  transaksi     Transaksi[]     // References multiple transactions
+  profile       String          @default("")
 }
 
 model Game {
-  id               Int                @id @default(autoincrement())
-  name             String             @default("")
-  gambar           String             @default("")
-  video            String             @default("")
-  developer        String             @default("")
-  harga            Int                @default(0)
-  deskripsi        String             @default("") @db.Text
-  genre            String             @default("")
-  tahun_rilis      DateTime           @default(now())
-  download_link    String             @default("")
-  Detail_Transaksi Detail_Transaksi[]
+  id               String          @id @default(auto()) @map("_id") @db.ObjectId
+  uuid             String          @unique @default(uuid())
+  name             String          @default("")
+  gambar           String          @default("")
+  video            String          @default("")
+  developer        String          @default("")
+  harga            Int             @default(0) 
+  deskripsi        String          @default("")
+  genre            String          @default("")
+  tahun_rilis      DateTime        @default(now())
+  download_link    String          @default("")
+  detailTransaksi  Detail_Transaksi[]  // References transaction details
 }
 
 model Transaksi {
-  id                Int                @id @default(autoincrement())
-  idPelanggan       Int?
-  pelanggan         Pelanggan?         @relation(fields: [idPelanggan], references: [id])
-  idAdmin           Int?
-  admin             Admin?             @relation(fields: [idAdmin], references: [id])
-  status            Status             @default(Belum_Lunas)
-  metode_pembayaran Method             @default(QRIS)
-  total_bayar       Int                @default(0)
-  tanggal_transaksi DateTime           @default(now())
-  Detail_Transaksi  Detail_Transaksi[]
+  id                String          @id @default(auto()) @map("_id") @db.ObjectId
+  idUser            String          @db.ObjectId
+  user              User?           @relation(fields: [idUser], references: [id]) // User relationship
+  status            Status          @default(Belum_Lunas)
+  metode_pembayaran Method          @default(QRIS)
+  total_bayar       Int             @default(0)
+  tanggal_transaksi DateTime        @default(now())
+  detailTransaksi   Detail_Transaksi[]  // References transaction details
 }
 
 model Detail_Transaksi {
-  id          Int        @id @default(autoincrement())
-  idTransaski Int?
-  transaksi   Transaksi? @relation(fields: [idTransaski], references: [id])
-  idGame      Int?
-  game        Game?      @relation(fields: [idGame], references: [id])
+  id          String          @id @default(auto()) @map("_id") @db.ObjectId
+  idTransaksi String          @db.ObjectId
+  transaksi   Transaksi?      @relation(fields: [idTransaksi], references: [id])
+  idGame      String          @db.ObjectId
+  game        Game?           @relation(fields: [idGame], references: [id])
+  createdAt   DateTime        @default(now())
 }
